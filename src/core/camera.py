@@ -1,7 +1,6 @@
 import math
 from math import radians, sin, cos
 from OpenGL.GL import glRotatef, glTranslatef
-from pygame.locals import K_w, K_s, K_a, K_d
 
 
 class Camera:
@@ -24,21 +23,29 @@ class Camera:
         self.pitch += dy * self.sensitivity
         self.pitch = max(-89.0, min(89.0, self.pitch))
 
-    def update_keyboard(self, keys, dt):
-        """Move a câmera com as teclas WASD, preservando a direção atual."""
+    def update_keyboard(self, keys_pressed, dt):
+        """
+        Move a câmera com as teclas WASD, preservando a direção atual.
+        
+        Args:
+            keys_pressed: Lista/tupla [w, a, s, d] com os estados das teclas
+            dt: Delta time em segundos
+        """
         velocity = self.speed * dt
         yaw_rad = radians(self.yaw)
+        
+        w_pressed, a_pressed, s_pressed, d_pressed = keys_pressed
 
-        if keys[K_w]:
+        if w_pressed:
             self.position[0] += sin(yaw_rad) * velocity
             self.position[2] -= cos(yaw_rad) * velocity
-        if keys[K_s]:
+        if s_pressed:
             self.position[0] -= sin(yaw_rad) * velocity
             self.position[2] += cos(yaw_rad) * velocity
-        if keys[K_a]:
+        if a_pressed:
             self.position[0] -= cos(yaw_rad) * velocity
             self.position[2] -= sin(yaw_rad) * velocity
-        if keys[K_d]:
+        if d_pressed:
             self.position[0] += cos(yaw_rad) * velocity
             self.position[2] += sin(yaw_rad) * velocity
         

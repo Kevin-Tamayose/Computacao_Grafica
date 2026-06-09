@@ -1,17 +1,39 @@
-import numpy as np
+"""
+Projeto CG - Síntese de Imagem (Lanterna)
 
+Ponto de entrada da aplicação.
+
+Arquitetura:
+1. Engine (motor gráfico abstrato)
+2. Game (lógica do jogo)
+3. Graphics (rendering de geometria e iluminação)
+4. Core (câmera e input)
+"""
+
+import numpy as np
 import pygame
-from pygame.locals import DOUBLEBUF, OPENGL, KEYDOWN, K_ESCAPE, K_l, K_LEFT, K_RIGHT, K_UP, K_DOWN
+from pygame.locals import DOUBLEBUF, OPENGL
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
-from dataclasses import dataclass
 
-from core.camera import Camera
-from graphics.geometry import draw_room, draw_flashlight, load_floor_texture, load_wall_texture
+# Engine
+from engine.asset_manager import AssetManager
+from engine.renderer import Renderer
+from core.input_manager import InputManager
+
+# Game
+from game.state import GameManager
+
+# Graphics
+from graphics.geometry import draw_room, draw_flashlight
 from graphics.lighting import setup_lighting, update_flashlight_light
 
+# Core
+from core.camera import Camera
+
+
 # =====================================================================
-# Configurações Iniciais e Variáveis Globais
+# Configurações Iniciais
 # =====================================================================
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
@@ -24,6 +46,7 @@ ROOM_DIVS_X = 20
 ROOM_DIVS_Z = 16
 ROOM_DIVS_Y = 24
 
+# Cores HUD
 HUD_BG_COLOR = (10, 14, 22, 210)
 HUD_PANEL_COLOR = (255, 255, 255, 28)
 HUD_TITLE_COLOR = (255, 238, 200)
@@ -31,35 +54,21 @@ HUD_TEXT_COLOR = (235, 235, 235)
 HUD_ACCENT_COLOR = (255, 214, 120)
 
 
-@dataclass
-class GameState:
-    flash_yaw: float = 0.0
-    flash_pitch: float = 0.0
-    light_on: bool = True
-    menu_view: str = "game"
-
-# Câmera e controle de jogador serão gerenciados em Camera
-
-# A rotação e o estado da lanterna são controlados localmente no loop principal.
-
 # =====================================================================
-# Funções de Geometria
+# Funções de HUD (mantidas do original)
 # =====================================================================
-# As funções de desenho da sala e da lanterna foram movidas para geometry.py.
-# Isso mantém o main.py focado no controle do fluxo do programa.
-
-# =====================================================================
-# Loop Principal
-# =====================================================================
-def set_mouse_capture(menu_open):
-    pygame.mouse.set_visible(menu_open)
-    pygame.event.set_grab(not menu_open)
+def set_mouse_capture(enabled: bool) -> None:
+    """Captura ou libera o mouse."""
+    pygame.mouse.set_visible(not enabled)
+    pygame.event.set_grab(enabled)
 
 
-def draw_hud(display, state, title_font, body_font):
+def draw_hud(display, game_manager, title_font, body_font):
+    """Desenha o HUD da aplicação."""
     hud_surface = pygame.Surface(display, pygame.SRCALPHA)
     hud_surface.fill((0, 0, 0, 0))
 
+    state = game_manager.state
     if state.menu_view != "game":
         hud_surface.fill(HUD_BG_COLOR)
 
@@ -136,98 +145,124 @@ def draw_hud(display, state, title_font, body_font):
     GL.glMatrixMode(GL.GL_MODELVIEW)
 
 
+# =====================================================================
+# Game Loop
+# =====================================================================
 def main():
+    """Função principal do programa."""
+    # Inicializar pygame
     pygame.init()
     pygame.font.init()
+
+    # Criar janela OpenGL
     display = (WINDOW_WIDTH, WINDOW_HEIGHT)
-    camera = Camera(room_width=ROOM_WIDTH, room_depth=ROOM_DEPTH)
-    state = GameState()
-    title_font = pygame.font.SysFont("Arial", 42, bold=True)
-    body_font = pygame.font.SysFont("Arial", 26)
-    # DOUBLEBUF (2 buffers para evitar flickering) e OPENGL (contexto 3D)
     pygame.display.set_mode(display, int(DOUBLEBUF) | int(OPENGL))
     pygame.display.set_caption("Projeto CG - Síntese de Imagem (Lanterna)")
 
-    set_mouse_capture(state.menu_view != "game")
+    # ===================================================================
+    # INICIALIZAR SISTEMAS
+    # ===================================================================
 
-    GL.glEnable(GL.GL_DEPTH_TEST) # Habilita o teste de profundidade (Z-Buffer)
+    # Motor gráfico
+    renderer = Renderer()
+    renderer.initialize(display)
+
+    # Gerenciador de recursos
+    asset_manager = AssetManager()
+
+    # Gerenciador de input
+    input_manager = InputManager()
+
+    # Gerenciador de estado do jogo
+    game_manager = GameManager()
+
+    # Câmera
+    camera = Camera(room_width=ROOM_WIDTH, room_depth=ROOM_DEPTH)
+
+    # Iluminação
     setup_lighting()
-    
-    # Carrega textura do chão
-    floor_texture_id = load_floor_texture()
-    wall_texture_id = load_wall_texture()
-    # Repetição separada para piso e paredes
+
+    # Texturas
+    floor_texture_id = asset_manager.load_texture('chats.jpg')
+    wall_texture_id = asset_manager.load_texture('wall.jpg')
     floor_texture_repeat = 4.0
     wall_texture_repeat = 1.25
 
-    # Matriz de Projeção (Define a lente da Câmera)
-    # O far plane é ajustado dinamicamente com base no tamanho da sala
-    GL.glMatrixMode(GL.GL_PROJECTION)
-    GL.glLoadIdentity()
-    far_plane = max(50.0, max(ROOM_WIDTH, ROOM_DEPTH, ROOM_HEIGHT) * 5)  # Escala o far plane com a sala
-    GLU.gluPerspective(60, (display[0]/display[1]), 0.1, far_plane) # FOV, Aspect Ratio, Near, Far
+    # Fontes para HUD
+    title_font = pygame.font.SysFont("Arial", 42, bold=True)
+    body_font = pygame.font.SysFont("Arial", 26)
 
+    # Controle de mouse
+    set_mouse_capture(game_manager.is_menu_open())
+
+    # ===================================================================
+    # GAME LOOP
+    # ===================================================================
     clock = pygame.time.Clock()
     running = True
 
     while running:
-        dt = clock.tick(60) / 1000.0 # Delta time (segundos por frame)
-        
-        # 1. TRATAMENTO DE EVENTOS ====================================
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    if state.menu_view == "game":
-                        state.menu_view = "pause"
-                    elif state.menu_view == "pause":
-                        state.menu_view = "game"
-                    else:
-                        state.menu_view = "pause"
-                    set_mouse_capture(state.menu_view != "game")
-                if state.menu_view == "pause" and event.key == pygame.K_c:
-                    state.menu_view = "controls"
-                if state.menu_view == "pause" and event.key == pygame.K_q:
-                    running = False
-                if event.key == K_l and state.menu_view == "game": # Tecla L liga/desliga a lanterna
-                    state.light_on = not state.light_on
+        dt = clock.tick(60) / 1000.0  # Delta time em segundos
 
-        if state.menu_view == "game":
-            # Movimento da Câmera (Mouse)
-            mouse_dx, mouse_dy = pygame.mouse.get_rel()
-            camera.update_mouse(mouse_dx, mouse_dy)
+        # -----------------------------------------------------------------
+        # FASE 1: INPUT & UPDATE
+        # -----------------------------------------------------------------
+        input_manager.update()
 
-            # Movimento da Câmera (Teclado - WASD)
-            keys = pygame.key.get_pressed()
-            camera.update_keyboard(keys, dt)
-            
-            # Movimento da Lanterna (Setas do Teclado)
-            flash_speed = 90.0 * dt
-            if keys[K_LEFT]:  state.flash_yaw += flash_speed
-            if keys[K_RIGHT]: state.flash_yaw -= flash_speed
-            if keys[K_UP]:    state.flash_pitch += flash_speed
-            if keys[K_DOWN]:  state.flash_pitch -= flash_speed
+        if input_manager.state.quit_requested:
+            running = False
+
+        if input_manager.state.escape_pressed:
+            game_manager.toggle_menu()
+            set_mouse_capture(game_manager.is_menu_open())
+
+        if input_manager.state.c_pressed and game_manager.state.menu_view == "pause":
+            game_manager.show_controls()
+
+        if input_manager.state.q_pressed:
+            running = False
+
+        if input_manager.state.l_pressed:
+            game_manager.toggle_light()
+
+        # Atualizar câmera e lanterna apenas se no jogo
+        if game_manager.is_in_game():
+            # Câmera (mouse + teclado)
+            camera.update_mouse(input_manager.state.mouse_dx, input_manager.state.mouse_dy)
+            camera.update_keyboard([
+                input_manager.state.w_pressed,
+                input_manager.state.a_pressed,
+                input_manager.state.s_pressed,
+                input_manager.state.d_pressed,
+            ], dt)
+
+            # Lanterna
+            yaw_delta, pitch_delta = input_manager.get_flashlight_rotation()
+            game_manager.update_flashlight(yaw_delta, pitch_delta, dt)
         else:
-            pygame.mouse.get_rel()
+            # Se no menu, consumir input do mouse
+            input_manager.state.mouse_dx = 0.0
+            input_manager.state.mouse_dy = 0.0
 
-        # 2. RENDERIZAÇÃO =============================================
-        GL.glClearColor(0.0, 0.0, 0.0, 1.0)
-        GL.glClear(int(GL.GL_COLOR_BUFFER_BIT) | int(GL.GL_DEPTH_BUFFER_BIT))
+        # -----------------------------------------------------------------
+        # FASE 2: RENDERIZAÇÃO
+        # -----------------------------------------------------------------
+        renderer.clear_screen(0.0, 0.0, 0.0)
+        renderer.setup_modelview()
 
-        # Matriz ModelView (Aplica as transformações no mundo/objetos)
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-
-        # Primeiro: Aplica a visão da câmera na cena (transforma o mundo)
+        # Aplicar transformação da câmera
         camera.apply_transform()
 
-        # Segundo: Posiciona a luz NO CENTRO DA CÂMERA após a transformação
-        # Assim a lanterna segue o jogador
-        update_flashlight_light(state.flash_yaw, state.flash_pitch, state.light_on)
+        # Atualizar luz da lanterna (segue a câmera)
+        update_flashlight_light(
+            game_manager.state.flash_yaw,
+            game_manager.state.flash_pitch,
+            game_manager.state.light_on
+        )
 
-        # Terceiro: Desenhar os objetos
+        # Desenhar sala
         draw_room(
+            renderer,
             size_x=ROOM_WIDTH,
             size_z=ROOM_DEPTH,
             size_y=ROOM_HEIGHT,
@@ -239,14 +274,26 @@ def main():
             floor_texture_repeat=floor_texture_repeat,
             wall_texture_repeat=wall_texture_repeat,
         )
-        draw_flashlight(state.flash_yaw, state.flash_pitch, state.light_on)
 
-        draw_hud(display, state, title_font, body_font)
+        # Desenhar lanterna
+        draw_flashlight(
+            game_manager.state.flash_yaw,
+            game_manager.state.flash_pitch,
+            game_manager.state.light_on
+        )
 
-        # Atualiza a tela
+        # Desenhar HUD
+        draw_hud(display, game_manager, title_font, body_font)
+
+        # Atualizar display
         pygame.display.flip()
 
+    # ===================================================================
+    # CLEANUP
+    # ===================================================================
+    asset_manager.unload_all_textures()
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
