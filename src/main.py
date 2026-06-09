@@ -57,6 +57,18 @@ HUD_ACCENT_COLOR = (255, 214, 120)
 # =====================================================================
 # Funções de HUD (mantidas do original)
 # =====================================================================
+
+class HUDButton:
+    """Representa um botão clicável na HUD."""
+    def __init__(self, x, y, width, height, action):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.action = action
+    
+    def is_clicked(self, mouse_x, mouse_y):
+        """Verifica se o botão foi clicado."""
+        return self.rect.collidepoint(int(mouse_x), int(mouse_y))
+
+
 def set_mouse_capture(enabled: bool) -> None:
     """Captura ou libera o mouse."""
     pygame.mouse.set_visible(not enabled)
@@ -64,9 +76,10 @@ def set_mouse_capture(enabled: bool) -> None:
 
 
 def draw_hud(display, game_manager, title_font, body_font):
-    """Desenha o HUD da aplicação."""
+    """Desenha o HUD da aplicação e retorna os botões clicáveis."""
     hud_surface = pygame.Surface(display, pygame.SRCALPHA)
     hud_surface.fill((0, 0, 0, 0))
+    buttons = []
 
     state = game_manager.state
     if state.menu_view != "game":
@@ -88,24 +101,41 @@ def draw_hud(display, game_manager, title_font, body_font):
 
         if state.menu_view == "pause":
             lines = [
-                "ESC: voltar ao jogo",
-                "C: mostrar controles",
-                "Q: sair do jogo",
-                f"Lanterna: {'ligada' if state.light_on else 'desligada'}",
+                ("Voltar ao jogo", "resume"),
+                ("Mostrar controles", "show_controls"),
+                ("Sair do jogo", "quit"),
+                (f"Lanterna: {'ligada' if state.light_on else 'desligada'}", "toggle_light"),
             ]
         else:
             lines = [
-                "ESC: voltar para pausa",
-                "WASD: mover",
-                "Mouse: olhar",
-                "Setas: orientar a lanterna",
-                "L: liga/desliga a lanterna",
+                ("Voltar para pausa", "back"),
+                ("WASD: mover", None),
+                ("Mouse: olhar", None),
+                ("Setas: orientar a lanterna", None),
+                ("L: liga/desliga a lanterna", None),
             ]
+        
         y = panel_y + 88
-        for index, line in enumerate(lines):
+        button_width = 480
+        button_height = 32
+        
+        for index, (line_data) in enumerate(lines):
+            if isinstance(line_data, tuple):
+                line, action = line_data
+            else:
+                line = line_data
+                action = None
+            
             color = HUD_ACCENT_COLOR if index == 0 else HUD_TEXT_COLOR
             text = body_font.render(line, True, color)
-            hud_surface.blit(text, (panel_x + 32, y))
+            text_x = panel_x + 32
+            hud_surface.blit(text, (text_x, y))
+            
+            # Criar botão se tem action
+            if action:
+                button = HUDButton(text_x - 10, y - 2, button_width, button_height, action)
+                buttons.append(button)
+            
             y += 34
     else:
         status = body_font.render(
@@ -143,6 +173,8 @@ def draw_hud(display, game_manager, title_font, body_font):
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glPopMatrix()
     GL.glMatrixMode(GL.GL_MODELVIEW)
+    
+    return buttons
 
 
 # =====================================================================
@@ -200,6 +232,7 @@ def main():
     # ===================================================================
     clock = pygame.time.Clock()
     running = True
+    hud_buttons = []  # Será atualizado a cada frame
 
     while running:
         dt = clock.tick(60) / 1000.0  # Delta time em segundos
@@ -224,6 +257,23 @@ def main():
 
         if input_manager.state.l_pressed:
             game_manager.toggle_light()
+        
+        # Processar cliques do mouse no HUD
+        if input_manager.state.mouse_clicked and not game_manager.is_in_game():
+            for button in hud_buttons:
+                if button.is_clicked(input_manager.state.mouse_x, input_manager.state.mouse_y):
+                    if button.action == "resume":
+                        game_manager.toggle_menu()
+                        set_mouse_capture(game_manager.is_menu_open())
+                    elif button.action == "show_controls":
+                        game_manager.show_controls()
+                    elif button.action == "back":
+                        game_manager.return_to_pause()
+                    elif button.action == "quit":
+                        running = False
+                    elif button.action == "toggle_light":
+                        game_manager.toggle_light()
+                    break  # Processar apenas um botão por frame
 
         # Atualizar câmera e lanterna apenas se no jogo
         if game_manager.is_in_game():
@@ -283,7 +333,7 @@ def main():
         )
 
         # Desenhar HUD
-        draw_hud(display, game_manager, title_font, body_font)
+        hud_buttons = draw_hud(display, game_manager, title_font, body_font)
 
         # Atualizar display
         pygame.display.flip()

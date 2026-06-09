@@ -29,6 +29,9 @@ class InputState:
     # Mouse
     mouse_dx: float = 0.0
     mouse_dy: float = 0.0
+    mouse_x: float = 0.0
+    mouse_y: float = 0.0
+    mouse_clicked: bool = False
     
     # Eventos discretos (por frame)
     escape_pressed: bool = False
@@ -68,6 +71,7 @@ class InputManager:
         self.state.c_pressed = False
         self.state.q_pressed = False
         self.state.quit_requested = False
+        self.state.mouse_clicked = False
         
         # Processar eventos pygame
         for event in pygame.event.get():
@@ -88,6 +92,13 @@ class InputManager:
                 elif event.key == pygame.K_q:
                     self.state.q_pressed = True
                     self._trigger_callback('q_pressed')
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Botão esquerdo do mouse
+                    self.state.mouse_clicked = True
+                    self.state.mouse_x = float(event.pos[0])
+                    self.state.mouse_y = float(event.pos[1])
+                    self._trigger_callback('mouse_clicked')
         
         # Atualizar estado contínuo do teclado
         keys = pygame.key.get_pressed()
