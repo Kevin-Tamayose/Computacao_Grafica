@@ -376,19 +376,19 @@ def draw_room(
 def draw_flashlight(flash_yaw, flash_pitch, light_on):
     """Desenha a lanterna no centro da cena usando a orientacao atual."""
     GL.glPushMatrix()
-    GL.glColor3f(0.2, 0.2, 0.2)
+    GL.glColor3f(0.18, 0.18, 0.18)
     GL.glRotatef(flash_yaw, 0, 1, 0)
     GL.glRotatef(-flash_pitch, 1, 0, 0)
-    GL.glTranslatef(0.0, 0.0, -0.5)
+    GL.glTranslatef(0.18, -0.12, -0.42)
 
     quadric = GLU.gluNewQuadric()
-    GLU.gluCylinder(quadric, 0.2, 0.2, 1.0, 16, 16)
+    GLU.gluCylinder(quadric, 0.11, 0.11, 0.65, 16, 16)
 
     if light_on:
-        GL.glColor3f(1.0, 1.0, 0.8)
+        GL.glColor3f(1.0, 0.98, 0.86)
     else:
-        GL.glColor3f(0.1, 0.1, 0.1)
+        GL.glColor3f(0.08, 0.08, 0.08)
 
-    GLU.gluDisk(quadric, 0.0, 0.2, 16, 1)
+    GLU.gluDisk(quadric, 0.0, 0.11, 16, 1)
     GLU.gluDeleteQuadric(quadric)
     GL.glPopMatrix()
