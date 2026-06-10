@@ -103,8 +103,15 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
-
+src/images/floorV2.jpg
+src/images/floorV2.png
+src/images/floorV3.png
 
 ARCHITECTURE.md
 COMPLETION_CHECKLIST.md
 REORGANIZATION_SUMMARY.md
+
+*.blend
+*.blend1
+*.mtl
+*.zip

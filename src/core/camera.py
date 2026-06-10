@@ -7,7 +7,7 @@ class Camera:
     """Representa a câmera do jogador."""
 
     def __init__(self, position=(0.0, 0.0, 8.0), yaw=0.0, pitch=0.0,
-                 speed=5.0, sensitivity=0.2, room_size=10.0, room_width=None, room_depth=None):
+                 speed=15.0, sensitivity=0.1, room_size=10.0, room_width=None, room_depth=None):
         self.position = list(position)
         self.yaw = yaw
         self.pitch = pitch
@@ -23,6 +23,9 @@ class Camera:
         self.pitch += dy * self.sensitivity
         self.pitch = max(-89.0, min(89.0, self.pitch))
 
+    def get_speed_multiplier(self, running: bool) -> float:
+        return 1.5 if running else 1.0
+    
     def update_keyboard(self, keys_pressed, dt):
         """
         Move a câmera com as teclas WASD, preservando a direção atual.
@@ -31,10 +34,10 @@ class Camera:
             keys_pressed: Lista/tupla [w, a, s, d] com os estados das teclas
             dt: Delta time em segundos
         """
-        velocity = self.speed * dt
-        yaw_rad = radians(self.yaw)
-        
-        w_pressed, a_pressed, s_pressed, d_pressed = keys_pressed
+        w_pressed, a_pressed, s_pressed, d_pressed, running = keys_pressed
+
+        velocity = self.speed * self.get_speed_multiplier(running) * dt
+        yaw_rad = radians(self.yaw)   
 
         if w_pressed:
             self.position[0] += sin(yaw_rad) * velocity

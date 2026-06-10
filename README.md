@@ -49,7 +49,7 @@ Computacao_Grafica/
 
 ### Pré-requisitos
 
-- Python 3.8+
+- Python 3.10+
 - Drivers OpenGL compatíveis com GLSL
 
 ### Instalação
@@ -176,7 +176,6 @@ if input_manager.state.space_pressed:
 
 ## 🎨 Screenshots
 
-> [Adicionar screenshots do projeto aqui]
 
 ## 📦 Dependências
 
@@ -189,18 +188,10 @@ numpy>=1.20.0
 
 Ver [requirements.txt](requirements.txt) para versões específicas.
 
-## 📝 Licença
+## 📝 Projeto
 
 Este projeto é parte do curso de **Computação Gráfica** do LANEM.
-
-## 👨‍💻 Autor
-
 Desenvolvido como projeto acadêmico de síntese de imagem e renderização 3D.
-
-## 🤝 Contribuindo
-
-Sugestões e melhorias são bem-vindas! Abra uma issue ou pull request.
-
 ---
 
 **Última atualização**: 2026-06-08

@@ -25,6 +25,7 @@ class InputState:
     right_pressed: bool = False
     up_pressed: bool = False
     down_pressed: bool = False
+    running: bool = False
     
     # Mouse
     mouse_dx: float = 0.0
@@ -106,6 +107,7 @@ class InputManager:
         self.state.a_pressed = keys[pygame.K_a]
         self.state.s_pressed = keys[pygame.K_s]
         self.state.d_pressed = keys[pygame.K_d]
+        self.state.running = keys[pygame.K_LSHIFT]
         self.state.left_pressed = keys[K_LEFT]
         self.state.right_pressed = keys[K_RIGHT]
         self.state.up_pressed = keys[K_UP]
@@ -145,10 +147,10 @@ class InputManager:
         Ativa/desativa captura de mouse e visibilidade do cursor.
         
         Args:
-            enabled: Se True, captura o mouse e oculta o cursor
+            enabled: Se False, oculta o cursor e captura o mouse
         """
-        pygame.mouse.set_visible(not enabled)
-        pygame.event.set_grab(enabled)
+        pygame.mouse.set_visible(enabled)
+        pygame.event.set_grab(not enabled)
 
     def _trigger_callback(self, event_name: str) -> None:
         """Chama a callback registrada para um evento, se existir."""

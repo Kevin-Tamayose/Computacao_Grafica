@@ -68,13 +68,6 @@ class HUDButton:
         """Verifica se o botão foi clicado."""
         return self.rect.collidepoint(int(mouse_x), int(mouse_y))
 
-
-def set_mouse_capture(enabled: bool) -> None:
-    """Captura ou libera o mouse."""
-    pygame.mouse.set_visible(not enabled)
-    pygame.event.set_grab(enabled)
-
-
 def draw_hud(display, game_manager, title_font, body_font):
     """Desenha o HUD da aplicação e retorna os botões clicáveis."""
     hud_surface = pygame.Surface(display, pygame.SRCALPHA)
@@ -225,7 +218,7 @@ def main():
     body_font = pygame.font.SysFont("Arial", 26)
 
     # Controle de mouse
-    set_mouse_capture(game_manager.is_menu_open())
+    input_manager.set_mouse_capture(game_manager.is_menu_open())
 
     # ===================================================================
     # GAME LOOP
@@ -247,13 +240,7 @@ def main():
 
         if input_manager.state.escape_pressed:
             game_manager.toggle_menu()
-            set_mouse_capture(game_manager.is_menu_open())
-
-        if input_manager.state.c_pressed and game_manager.state.menu_view == "pause":
-            game_manager.show_controls()
-
-        if input_manager.state.q_pressed:
-            running = False
+            input_manager.set_mouse_capture(game_manager.is_menu_open())
 
         if input_manager.state.l_pressed:
             game_manager.toggle_light()
@@ -264,7 +251,6 @@ def main():
                 if button.is_clicked(input_manager.state.mouse_x, input_manager.state.mouse_y):
                     if button.action == "resume":
                         game_manager.toggle_menu()
-                        set_mouse_capture(game_manager.is_menu_open())
                     elif button.action == "show_controls":
                         game_manager.show_controls()
                     elif button.action == "back":
@@ -284,6 +270,7 @@ def main():
                 input_manager.state.a_pressed,
                 input_manager.state.s_pressed,
                 input_manager.state.d_pressed,
+                input_manager.state.running,
             ], dt)
 
             # Lanterna
