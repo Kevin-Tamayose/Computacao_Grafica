@@ -21,6 +21,7 @@ class InputState:
     a_pressed: bool = False
     s_pressed: bool = False
     d_pressed: bool = False
+    e_pressed: bool = False
     left_pressed: bool = False
     right_pressed: bool = False
     up_pressed: bool = False
@@ -71,6 +72,7 @@ class InputManager:
         self.state.l_pressed = False
         self.state.c_pressed = False
         self.state.q_pressed = False
+        self.state.e_pressed = False
         self.state.quit_requested = False
         self.state.mouse_clicked = False
         
@@ -93,6 +95,9 @@ class InputManager:
                 elif event.key == pygame.K_q:
                     self.state.q_pressed = True
                     self._trigger_callback('q_pressed')
+                elif event.key == pygame.K_e:
+                    self.state.e_pressed = True
+                    self._trigger_callback('e_pressed')
             
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Botão esquerdo do mouse

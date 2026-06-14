@@ -17,6 +17,7 @@ import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 
 # Engine
+from engine import renderer
 from engine.asset_manager import AssetManager
 from engine.renderer import Renderer
 from core.input_manager import InputManager
@@ -31,6 +32,8 @@ from graphics.lighting import setup_lighting, update_flashlight_light
 # Core
 from core.camera import Camera
 
+# Objects
+from engine.object_model.slot_machine import SlotMachine
 
 # =====================================================================
 # Configurações Iniciais
@@ -52,7 +55,6 @@ HUD_PANEL_COLOR = (255, 255, 255, 28)
 HUD_TITLE_COLOR = (255, 238, 200)
 HUD_TEXT_COLOR = (235, 235, 235)
 HUD_ACCENT_COLOR = (255, 214, 120)
-
 
 # =====================================================================
 # Funções de HUD (mantidas do original)
@@ -169,7 +171,6 @@ def draw_hud(display, game_manager, title_font, body_font):
     
     return buttons
 
-
 # =====================================================================
 # Game Loop
 # =====================================================================
@@ -212,13 +213,25 @@ def main():
     wall_texture_id = asset_manager.load_texture('wall.jpg')
     floor_texture_repeat = 4.0
     wall_texture_repeat = 1.25
-
+    
     # Fontes para HUD
     title_font = pygame.font.SysFont("Arial", 42, bold=True)
     body_font = pygame.font.SysFont("Arial", 26)
 
     # Controle de mouse
     input_manager.set_mouse_capture(game_manager.is_menu_open())
+
+    # =====================================================================
+    # Objetos
+    # =====================================================================
+    slot_machine = SlotMachine(corpo_model = asset_manager.load_obj('slot/Slot_body.obj'),
+                                alavanca_model= asset_manager.load_obj('slot/Lever.obj'),
+                                rolo_model= asset_manager.load_obj('slot/Rolo.obj'),
+                                textura_id= asset_manager.load_texture('slot/textures/Material.001_baseColor.png'),
+                                pos_x= 0.0,
+                                pos_y= -8.0,
+                                pos_z= -5.0,
+                                escala= 30)
 
     # ===================================================================
     # GAME LOOP
@@ -244,7 +257,13 @@ def main():
 
         if input_manager.state.l_pressed:
             game_manager.toggle_light()
-        
+
+        if input_manager.state.e_pressed:
+            cam_x, cam_y, cam_z = camera.position
+            slot_machine.ativar_animacoes(player_x=cam_x, 
+                                player_y=cam_y, 
+                                player_z=cam_z)
+
         # Processar cliques do mouse no HUD
         if input_manager.state.mouse_clicked and not game_manager.is_in_game():
             for button in hud_buttons:
@@ -311,6 +330,8 @@ def main():
             floor_texture_repeat=floor_texture_repeat,
             wall_texture_repeat=wall_texture_repeat,
         )
+        slot_machine.update_lever(dt=dt)
+        slot_machine.draw(renderer)
 
         # Desenhar lanterna
         draw_flashlight(

@@ -14,6 +14,8 @@ from typing import Tuple, Optional
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 
+from engine.object_model.objmodel import OBJModel
+
 
 class Renderer:
     """Abstração de renderização OpenGL."""
@@ -241,6 +243,24 @@ class Renderer:
                 GL.glVertex3f(x, y + step_y, z)
         
         GL.glEnd()
+        
+        if texture_id is not None:
+            GL.glDisable(GL.GL_TEXTURE_2D)
+
+    def draw_model(self, model: OBJModel, texture_id: Optional[int] = None) -> None:
+        """
+        Renderiza um objeto do tipo OBJModel.
+        """
+        if model is None or model.display_list_id is None:
+            return
+
+        if texture_id is not None:
+            GL.glEnable(GL.GL_TEXTURE_2D)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, texture_id)
+            GL.glColor3f(1.0, 1.0, 1.0)
+
+        # Executa instantaneamente toda a geometria pré-compilada na placa de vídeo
+        GL.glCallList(model.display_list_id)
         
         if texture_id is not None:
             GL.glDisable(GL.GL_TEXTURE_2D)
