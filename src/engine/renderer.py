@@ -103,24 +103,26 @@ class Renderer:
                     v0 = (j / divs_z) * repeat_z
                     v1 = ((j + 1) / divs_z) * repeat_z
 
+                    # Vértice 1
                     GL.glTexCoord2f(u0, v0)
-                
-                GL.glVertex3f(x, y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x, y, z)
+                    
+                    # Vértice 2
                     GL.glTexCoord2f(u1, v0)
-                
-                GL.glVertex3f(x + step_x, y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x + step_x, y, z)
+                    
+                    # Vértice 3
                     GL.glTexCoord2f(u1, v1)
-                
-                GL.glVertex3f(x + step_x, y, z + step_z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x + step_x, y, z + step_z)
+                    
+                    # Vértice 4
                     GL.glTexCoord2f(u0, v1)
-                
-                GL.glVertex3f(x, y, z + step_z)
+                    GL.glVertex3f(x, y, z + step_z)
+                else:
+                    GL.glVertex3f(x, y, z)
+                    GL.glVertex3f(x + step_x, y, z)
+                    GL.glVertex3f(x + step_x, y, z + step_z)
+                    GL.glVertex3f(x, y, z + step_z)
         
         GL.glEnd()
         
@@ -163,27 +165,30 @@ class Renderer:
                     v0 = (i / divs_y) * repeat_y
                     v1 = ((i + 1) / divs_y) * repeat_y
 
+                    # Vértice 1
                     GL.glTexCoord2f(u0, v0)
-                
-                GL.glVertex3f(x, y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x, y, z)
+                    
+                    # Vértice 2
                     GL.glTexCoord2f(u1, v0)
-                
-                GL.glVertex3f(x, y, z + step_z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x, y, z + step_z)
+                    
+                    # Vértice 3
                     GL.glTexCoord2f(u1, v1)
-                
-                GL.glVertex3f(x, y + step_y, z + step_z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x, y + step_y, z + step_z)
+                    
+                    # Vértice 4
                     GL.glTexCoord2f(u0, v1)
-                
-                GL.glVertex3f(x, y + step_y, z)
+                    GL.glVertex3f(x, y + step_y, z)
+                else:
+                    # Fluxo sem textura
+                    GL.glVertex3f(x, y, z)
+                    GL.glVertex3f(x, y, z + step_z)
+                    GL.glVertex3f(x, y + step_y, z + step_z)
+                    GL.glVertex3f(x, y + step_y, z)
         
         GL.glEnd()
-        
+
         if texture_id is not None:
             GL.glDisable(GL.GL_TEXTURE_2D)
 
@@ -223,24 +228,27 @@ class Renderer:
                     v0 = (j / divs_y) * repeat_y
                     v1 = ((j + 1) / divs_y) * repeat_y
 
+                    # Vértice 1
                     GL.glTexCoord2f(u0, v0)
-                
-                GL.glVertex3f(x, y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x, y, z)
+                    
+                    # Vértice 2
                     GL.glTexCoord2f(u1, v0)
-                
-                GL.glVertex3f(x + step_x, y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x + step_x, y, z)
+                    
+                    # Vértice 3
                     GL.glTexCoord2f(u1, v1)
-                
-                GL.glVertex3f(x + step_x, y + step_y, z)
-                
-                if texture_id is not None:
+                    GL.glVertex3f(x + step_x, y + step_y, z)
+                    
+                    # Vértice 4
                     GL.glTexCoord2f(u0, v1)
-                
-                GL.glVertex3f(x, y + step_y, z)
+                    GL.glVertex3f(x, y + step_y, z)
+                else:
+                    # Fluxo sem textura
+                    GL.glVertex3f(x, y, z)
+                    GL.glVertex3f(x + step_x, y, z)
+                    GL.glVertex3f(x + step_x, y + step_y, z)
+                    GL.glVertex3f(x, y + step_y, z)
         
         GL.glEnd()
         
